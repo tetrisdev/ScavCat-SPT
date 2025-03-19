@@ -1,9 +1,9 @@
 name: Node.js CI
 
 on:
-  push:
-    tags:
-      - 'v*' # Runs only when a tag starting with 'v' (e.g., v1.0.0)
+  release:
+    types:
+      - created  # Trigger only when a new release is created
 
 jobs:
   build:
@@ -24,7 +24,7 @@ jobs:
     - run: npm ci
     - run: npm run build --if-present
 
-    # Find the .zip file in /dist
+    # Find the built zip file in /dist
     - name: Find the built zip file
       id: find_zip
       run: |
@@ -35,16 +35,10 @@ jobs:
         fi
         echo "ZIP_FILE=$ZIP_FILE" >> $GITHUB_ENV
 
-    # Create a GitHub release and upload the zip file
-    - name: Create GitHub Release
-      id: create_release
+    # Upload the zip file to the GitHub release
+    - name: Upload Asset to Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref_name }}
-        name: Release ${{ github.ref_name }}
-        draft: false
-        prerelease: false
         files: ${{ env.ZIP_FILE }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
