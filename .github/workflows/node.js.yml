@@ -1,0 +1,50 @@
+name: Node.js CI
+
+on:
+  push:
+    tags:
+      - 'v*' # Runs only when a tag starting with 'v' (e.g., v1.0.0)
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [22.12.0]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - run: npm ci
+    - run: npm run build --if-present
+
+    # Find the .zip file in /dist
+    - name: Find the built zip file
+      id: find_zip
+      run: |
+        ZIP_FILE=$(find dist -name "*.zip" | head -n 1)
+        if [[ -z "$ZIP_FILE" ]]; then
+          echo "No zip file found in /dist!"
+          exit 1
+        fi
+        echo "ZIP_FILE=$ZIP_FILE" >> $GITHUB_ENV
+
+    # Create a GitHub release and upload the zip file
+    - name: Create GitHub Release
+      id: create_release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        files: ${{ env.ZIP_FILE }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
