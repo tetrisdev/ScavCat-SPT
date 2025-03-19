@@ -34,6 +34,21 @@ jobs:
           exit 1
         fi
         echo "ZIP_FILE=$ZIP_FILE" >> $GITHUB_ENV
+        
+    - name: Remove existing assets from release
+      run: |
+        RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                     "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.event.release.tag_name }}" | jq -r '.id')
+
+        ASSET_IDS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                     "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets" | jq -r '.[].id')
+
+        for ASSET_ID in $ASSET_IDS; do
+          curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+               "https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID"
+        done
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     # Upload the zip file to the GitHub release
     - name: Upload Asset to Release
