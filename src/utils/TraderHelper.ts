@@ -1,6 +1,6 @@
 import { PreSptModLoader } from "@spt/loaders/PreSptModLoader";
 import { ITraderBase, ITraderAssort } from "@spt/models/eft/common/tables/ITrader";
-import { ITraderConfig, UpdateTime } from "@spt/models/spt/config/ITraderConfig";
+import { ITraderConfig, IUpdateTime } from "@spt/models/spt/config/ITraderConfig";
 import { IDatabaseTables } from "@spt/models/spt/server/IDatabaseTables";
 import { ImageRouter } from "@spt/routers/ImageRouter";
 import { JsonUtil } from "@spt/utils/JsonUtil";
@@ -17,7 +17,7 @@ export class TraderHelper
     public setTraderUpdateTime(traderConfig: ITraderConfig, baseJson: any, refreshTimeSecondsMin: number, refreshTimeSecondsMax: number): void
     {
         // Add refresh time in seconds to config
-        const traderRefreshRecord: UpdateTime = {
+        const traderRefreshRecord: IUpdateTime = {
             traderId: baseJson._id,
             seconds: {
                 min: refreshTimeSecondsMin,
@@ -34,7 +34,7 @@ export class TraderHelper
      * @param tables database
      * @param jsonUtil json utility class
      */
-    public addTraderToDb(traderDetailsToAdd: any, tables: IDatabaseTables, jsonUtil: JsonUtil, assortJson : any): void
+    public addTraderToDb(traderDetailsToAdd: any, tables: IDatabaseTables, jsonUtil: JsonUtil, assortJson : any, dialogueJson: any): void
     {
         // Add trader to trader table, key is the traders id
         tables.traders[traderDetailsToAdd._id] = {
@@ -45,6 +45,7 @@ export class TraderHelper
                 success: {},
                 fail: {},
             }, // questassort is empty as trader has no assorts unlocked by quests
+            dialogue: jsonUtil.deserialize(jsonUtil.serialize(dialogueJson))
         };
     }
 

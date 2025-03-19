@@ -3,33 +3,39 @@ import { DependencyContainer } from "tsyringe";
 // SPT types
 import { IPreSptLoadMod } from "@spt/models/external/IPreSptLoadMod";
 import { IPostDBLoadMod } from "@spt/models/external/IPostDBLoadMod";
-import { ILogger } from "@spt/models/spt/utils/ILogger";
 import { PreSptModLoader } from "@spt/loaders/PreSptModLoader";
 import { DatabaseServer } from "@spt/servers/DatabaseServer";
 import { ImageRouter } from "@spt/routers/ImageRouter";
 import { ConfigServer } from "@spt/servers/ConfigServer";
 import { ConfigTypes } from "@spt/models/enums/ConfigTypes";
+import { IInsuranceConfig } from "@spt/models/spt/config/IInsuranceConfig";
 import { ITraderConfig } from "@spt/models/spt/config/ITraderConfig";
 import { IRagfairConfig } from "@spt/models/spt/config/IRagfairConfig";
 import { JsonUtil } from "@spt/utils/JsonUtil";
 import { Traders } from "@spt/models/enums/Traders";
 
+
 // New trader settings
 import baseJson = require("../db/base.json");
 import assortJson = require("../db/assort.json");
+import dialogueJson = require("../db/dialogue.json")
 
-import { TraderHelper } from "./traderHelpers";
+import { TraderHelper } from "./utils/TraderHelper";
+import { PrefixLogger } from "./utils/PrefixLogger";
+import { BaseClasses } from "@spt/models/enums/BaseClasses";
+import { ObjectFlags } from "typescript";
 
-class SampleTrader implements IPreSptLoadMod, IPostDBLoadMod
+class ScavCat implements IPreSptLoadMod, IPostDBLoadMod
 {
     private mod: string;
     private traderImgPath: string;
-    private logger: ILogger;
+    private logger: PrefixLogger;
     private traderHelper: TraderHelper;
 
+
     constructor() {
-        this.mod = "131AddTraderWithAssortJSON"; // Set name of mod so we can log it to console later - match this to your folder name that's built for \user\mods\
-        this.traderImgPath = "res/cat.jpg"; // Set path to trader image
+        this.mod = "tetrisdevdonutxlord-scavcat";
+        this.traderImgPath = "res/SCAVCAT.jpg"; // Set path to trader image
     }
 
     /**
@@ -39,8 +45,8 @@ class SampleTrader implements IPreSptLoadMod, IPostDBLoadMod
     public preSptLoad(container: DependencyContainer): void
     {
         // Get a logger
-        this.logger = container.resolve<ILogger>("WinstonLogger");
-        this.logger.debug(`[${this.mod}] preSpt Loading... `);
+        this.logger = PrefixLogger.getInstance(container);
+        this.logger.debug('preSpt Loading... ');
 
         // Get SPT code/data we need later
         const preSptModLoader: PreSptModLoader = container.resolve<PreSptModLoader>("PreSptModLoader");
@@ -60,7 +66,7 @@ class SampleTrader implements IPreSptLoadMod, IPostDBLoadMod
         // Add trader to flea market
         ragfairConfig.traders[baseJson._id] = true;
 
-        this.logger.debug(`[${this.mod}] preSpt Loaded`);
+        this.logger.debug('preSpt Loaded');
     }
 
     /**
@@ -69,31 +75,28 @@ class SampleTrader implements IPreSptLoadMod, IPostDBLoadMod
      */
     public postDBLoad(container: DependencyContainer): void
     {
-        this.logger.debug(`[${this.mod}] postDb Loading... `);
+        this.logger.debug('postDb Loading... ');
 
         // Resolve SPT classes we'll use
         const databaseServer: DatabaseServer = container.resolve<DatabaseServer>("DatabaseServer");
+        const configServer: ConfigServer = container.resolve<ConfigServer>("ConfigServer")
         const jsonUtil: JsonUtil = container.resolve<JsonUtil>("JsonUtil");
 
         // Get a reference to the database tables
         const tables = databaseServer.getTables();
+        const insuranceConfig = configServer.getConfig<IInsuranceConfig>(ConfigTypes.INSURANCE);
 
-        // Add new trader to the trader dictionary in DatabaseServer - this is where the assort json is loaded
-        /*
-        * The assortJSON includes the following:
-        * Milk available for roubles at LL1
-        * Milk available for item barter at LL1
-        * Helmet w/ soft armour available for roubles at LL1
-        * Helmet w/ soft armour available for item barter at LL1
-        * 
-        * Your assort MUST use mongoID for _ids
-        * You can use friendly names for _name
-        */
-        this.traderHelper.addTraderToDb(baseJson, tables, jsonUtil, assortJson);
-        this.traderHelper.addTraderToLocales(baseJson, tables, baseJson.name, "Cat", baseJson.nickname, baseJson.location, "This is the cat shop");
+        // Add Trader to database
+        this.traderHelper.addTraderToDb(baseJson, tables, jsonUtil, assortJson, dialogueJson);
+
+        // Add Trader to Locales
+        this.traderHelper.addTraderToLocales(baseJson, tables, baseJson.surname, baseJson.name, baseJson.nickname, baseJson.location, baseJson.description);
         
-        this.logger.debug(`[${this.mod}] postDb Loaded`);
+        //Scav Cat Insurance return chance 100%
+        insuranceConfig.returnChancePercent["67dae9c254023e4f20bac54f"] = 100;
+
+        this.logger.debug('postDb Loaded');
     }
 }
 
-export const mod = new SampleTrader();
+export const mod = new ScavCat();
