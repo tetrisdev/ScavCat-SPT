@@ -1,0 +1,22 @@
+## SPT
+*.d.ts
+.pkg-cache/
+build/
+obj/
+dist/
+types/
+
+## visual studio
+.vs
+.idea
+.vscode
+
+## nodejs
+package-lock.json
+node_modules
+
+## windows
+desktop.ini
+
+## OSX
+.DS_Store
